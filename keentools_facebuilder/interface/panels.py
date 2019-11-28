@@ -135,6 +135,8 @@ class FB_PT_HeaderPanel(Panel):
                                   text='Show Head', icon='HIDE_OFF')
                 op.action = 'unhide_head'
                 op.headnum = headnum
+
+                FBLoader.restore_wireframe(context)
             return
 
         elif state == 'RECONSTRUCT':

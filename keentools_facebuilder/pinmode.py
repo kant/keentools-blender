@@ -237,8 +237,14 @@ class FB_OT_PinMode(bpy.types.Operator):
         cameras.hide_other_cameras(self.headnum, self.camnum)
         # Start our shader
         self._init_wireframer_colors(settings.overall_opacity)
+        print("CONTEXT:", dir(context))
+        for c in dir(context):
+            print(c, getattr(context, c))
         FBLoader.viewport().create_batch_2d(context)
-        FBLoader.viewport().register_handlers(args, context)
+        FBLoader.viewport().register_handlers(args)
+        FBLoader.viewport().register_update_timer(context)
+
+        # Main handler registration for modal operator
         context.window_manager.modal_handler_add(self)
 
         kid = settings.get_keyframe(self.headnum, self.camnum)

@@ -127,7 +127,8 @@ class FB_OT_MovePin(bpy.types.Operator):
 
         FBLoader.load_all(headnum, camnum)
         FBLoader.viewport().create_batch_2d(context)
-        FBLoader.viewport().register_handlers(args, context)
+        FBLoader.viewport().register_handlers(args)
+        FBLoader.viewport().register_update_timer(context)
 
         settings.pinmode = True
         x, y = coords.get_image_space_coord(mouse_x, mouse_y, context)

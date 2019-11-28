@@ -126,10 +126,17 @@ class FBViewport:
     def tolerance_dist2(cls):  # squared distance
         return (cls.POINT_SENSITIVITY * cls.PIXEL_SIZE)**2
 
+    @classmethod
+    def register_update_timer(cls, context, time_step = 0.2):
+        # Timer for continuous update modal view
+        cls.draw_timer_handler = context.window_manager.event_timer_add(
+            time_step=time_step, window=context.window
+        )
+
     # --------
     # Handlers
     @classmethod
-    def register_handlers(cls, args, context):
+    def register_handlers(cls, args):
         cls.unregister_handlers()  # Experimental
 
         cls.residuals().register_handler(args)
@@ -139,10 +146,7 @@ class FBViewport:
         # Draw text on screen registration
         cls.texter().register_handler(args)
         cls.wireframer().register_handler(args)
-        # Timer for continuous update modal view
-        cls.draw_timer_handler = context.window_manager.event_timer_add(
-            time_step=0.2, window=context.window
-        )
+
 
     @classmethod
     def unregister_handlers(cls):

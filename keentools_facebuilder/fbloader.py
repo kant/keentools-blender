@@ -24,10 +24,11 @@ import numpy as np
 from .viewport import FBViewport
 from .utils import attrs, coords, cameras
 from .utils.other import FBStopShaderTimer, restore_ui_elements
+from .utils.fake_context import get_override_context
 
 from .builder import UniBuilder
 from .fbdebug import FBDebug
-from .config import Config, get_main_settings, BuilderType
+from .config import Config, get_main_settings, get_operators, BuilderType
 import keentools_facebuilder.blender_independent_packages.pykeentools_loader as pkt
 
 
@@ -242,6 +243,46 @@ class FBLoader:
         cls.viewport().update_surface_points(fb, headobj, kid)
 
         cls.shader_update(headobj)
+
+    @classmethod
+    def restore_wireframe(cls, context):
+        logger = logging.getLogger(__name__)
+        logger.debug("TRY TO RESTORE WIREFRAMER")
+
+        fb = cls.get_builder()
+        settings = get_main_settings()
+        headnum = settings.current_headnum
+        camnum = settings.current_camnum
+        head = settings.get_head(headnum)
+        cam = head.get_camera(camnum)
+        kid = cam.get_keyframe()
+        headobj = head.headobj
+
+        opacity = 1.0
+
+        wireframer = cls.viewport().wireframer()
+
+        ctx = get_override_context()
+        ctx['scene'] = context.scene
+
+        for c in dir(context):
+            print(c, getattr(context, c))
+
+        cls.viewport().create_batch_2d(context)
+        cls.viewport().register_handlers((None, context))
+        cls.viewport().register_update_timer(context)
+        # op = getattr(bpy.ops.object, Config.fb_pinmode_operator_callname)
+        # context.window_manager.modal_handler_add(FB_OT_PinMode)
+
+        wireframer.init_geom_data(headobj)
+        wireframer.init_edge_indices(headobj)
+        wireframer.init_color_data(
+            (*settings.wireframe_color, 1.0))
+        cls.shader_update(headobj)
+
+        cls.viewport().set_spins(cls.viewport().img_points(fb, kid))
+        cls.viewport().update_surface_points(fb, headobj, kid)
+
 
     @classmethod
     def rigidity_setup(cls):
