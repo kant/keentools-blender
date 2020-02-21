@@ -223,6 +223,24 @@ def use_render_frame_size_scaled():
     settings.frame_height = rh
 
 
+def rotate_pins_cw(headnum, camnum, times=1):
+    settings = get_main_settings()
+    camera = settings.get_camera(headnum, camnum)
+    if camera is None or not camera.has_pins():
+        return
+    kid = camera.get_keyframe()
+    fw = settings.frame_width
+    fh = settings.frame_height
+    FBLoader.load_only(headnum)
+    fb = FBLoader.get_builder()
+    for t in range(times):
+        for n in range(fb.pins_count(kid)):
+            p = fb.pin(kid, n)
+            x = p.img_pos[1] + (fw - fh) * 0.5
+            y = -p.img_pos[0] + (fh + fw) * 0.5
+            fb.move_pin(kid, n, (x, y))
+
+
 def reset_model_to_neutral(headnum):
     settings = get_main_settings()
     FBLoader.load_only(headnum)

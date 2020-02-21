@@ -782,8 +782,14 @@ class FB_OT_RotateImageCW(Operator):
 
     def execute(self, context):
         settings = get_main_settings()
-        camera = settings.get_camera(self.headnum, self.camnum)
+        head = settings.get_head(self.headnum)
+        camera = head.get_camera(self.headnum)
         cameras.rotate_background_image(camera, 1)
+
+        manipulate.rotate_pins_cw(self.headnum, self.camnum, times=1)
+        FBLoader.solve(self.headnum, self.camnum)
+        FBLoader.fb_redraw(self.headnum, self.camnum)
+        FBLoader.fb_save(self.headnum, self.camnum)
         return {'FINISHED'}
 
 
@@ -803,6 +809,11 @@ class FB_OT_RotateImageCCW(Operator):
         settings = get_main_settings()
         camera = settings.get_camera(self.headnum, self.camnum)
         cameras.rotate_background_image(camera, -1)
+
+        manipulate.rotate_pins_cw(self.headnum, self.camnum, times=3)
+        FBLoader.solve(self.headnum, self.camnum)
+        FBLoader.fb_redraw(self.headnum, self.camnum)
+        FBLoader.fb_save(self.headnum, self.camnum)
         return {'FINISHED'}
 
 
