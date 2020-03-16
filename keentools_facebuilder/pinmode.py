@@ -216,6 +216,8 @@ class FB_OT_PinMode(bpy.types.Operator):
             FBLoader.builder().sync_version(head.mod_ver)
             head.mod_ver = FBLoader.get_builder_version()
 
+        head.update_scene_frame_size(self.camnum)
+
         if not settings.check_heads_and_cams():
             self._fix_heads_with_warning()
             return {'FINISHED'}

@@ -181,6 +181,9 @@ class FBLoader:
         cls.update_all_camera_focals(head)
         coords.update_head_mesh_neutral(cls.get_builder(), headobj)
 
+        # print("CALL REVERT SIZE")
+        settings.revert_scene_frame_size()
+
         # === Debug use only ===
         FBDebug.add_event_to_queue('OUT_PIN_MODE', 0, 0)
         FBDebug.output_event_queue()
@@ -310,7 +313,7 @@ class FBLoader:
 
     @classmethod
     def set_camera_projection(cls, fl, sw, rx, ry,
-                              near_clip=0.1, far_clip=1000.0):
+                              near_clip=0.1, far_clip=1000.0, keyframe=None):
         camera_w = rx  # Camera Width in pixels 1920
         camera_h = ry  # Camera Height in pixels 1080
         focal_length = fl
@@ -324,8 +327,15 @@ class FBLoader:
             camera_w, camera_h, focal_length, sensor_width,
             near_clip, far_clip)
 
+        logger = logging.getLogger(__name__)
         fb = cls.get_builder()
-        fb.set_projection_mat(projection)
+        if keyframe is None:
+            fb.set_projection_mat(projection)
+            logger.debug("set_projection_mat")
+        else:
+            fb.set_projection_mat_at(keyframe, projection)
+            logger.debug("set_projection_mat_at: {} {}x{}".format(keyframe,
+                                                                  rx, ry))
 
     @classmethod
     def update_pins_count(cls, headnum, camnum):
@@ -444,6 +454,7 @@ class FBLoader:
     @classmethod
     def load_all(cls, headnum, camnum):
         logger = logging.getLogger(__name__)
+        logger.debug("LOAD ALL START")
         scene = bpy.context.scene
         settings = get_main_settings()
         head = settings.get_head(headnum)
@@ -459,7 +470,8 @@ class FBLoader:
 
         rx = scene.render.resolution_x
         ry = scene.render.resolution_y
-        cls.set_camera_projection(head.focal, head.sensor_width, rx, ry)
+        cls.set_camera_projection(head.focal, head.sensor_width, rx, ry,
+                                  keyframe=cam.get_keyframe())
 
         # Update all cameras model_mat
         for i, c in enumerate(head.cameras):
@@ -514,7 +526,6 @@ class FBLoader:
     @classmethod
     def add_camera(cls, headnum, img=None):
         logger = logging.getLogger(__name__)
-        # scene = bpy.context.scene
         settings = get_main_settings()
         head = settings.get_head(headnum)
         fb = cls.get_builder()
@@ -565,6 +576,11 @@ class FBLoader:
         b.frame_method = 'CROP'
         b.show_on_foreground = False
         b.alpha = 1.0
+
+        if img is not None:
+            w, h = img.size
+            camera.set_frame_width(w)
+            camera.set_frame_height(h)
 
         # We added new keyframe, so update serial string
         FBLoader.save_only(headnum)

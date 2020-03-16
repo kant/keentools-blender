@@ -189,6 +189,9 @@ class FBCameraItem(PropertyGroup):
     image_width: IntProperty(default=-1)
     image_height: IntProperty(default=-1)
 
+    frame_width: IntProperty(default=-1)
+    frame_height: IntProperty(default=-1)
+
     camobj: PointerProperty(
         name="Camera", type=bpy.types.Object
     )
@@ -206,6 +209,12 @@ class FBCameraItem(PropertyGroup):
     exif: PointerProperty(type=FBExifItem)
 
     orientation: IntProperty(default=0)  # angle = orientation * Pi/2
+
+    def update_scene_frame_size(self):
+        if self.frame_width > 0 and self.frame_height > 0:
+            render = bpy.context.scene.render
+            render.resolution_x = self.frame_width
+            render.resolution_y = self.frame_height
 
     @staticmethod
     def convert_matrix_to_str(arr):
@@ -243,6 +252,18 @@ class FBCameraItem(PropertyGroup):
 
     def set_image_height(self, h):
         self.image_height = h
+
+    def get_frame_width(self):
+        return self.frame_width
+
+    def set_frame_width(self, w):
+        self.frame_width = w
+
+    def get_frame_height(self):
+        return self.frame_height
+
+    def set_frame_height(self, h):
+        self.frame_height = h
 
     # Real getter from image size
     def get_image_size(self):
@@ -379,6 +400,11 @@ class FBHeadItem(PropertyGroup):
         default=True)
 
     exif: PointerProperty(type=FBExifItem)
+
+    def update_scene_frame_size(self, camnum):
+        cam = self.get_camera(camnum)
+        if cam is not None:
+            cam.update_scene_frame_size()
 
     def get_camera(self, camnum):
         if camnum < 0 and len(self.cameras) + camnum >= 0:
@@ -584,6 +610,18 @@ class FBSceneSettings(PropertyGroup):
         description="Current head",
         name="Blue head button", default=True,
         update=update_blue_head_button)
+
+    def revert_scene_frame_size(self):
+        if self.frame_width > 0 and self.frame_height > 0:
+            render = bpy.context.scene.render
+            render.resolution_x = self.frame_width
+            render.resolution_y = self.frame_height
+            # print("REVERT SIZE")
+
+    def copy_scene_frame_size(self):
+        render = bpy.context.scene.render
+        self.frame_width = render.resolution_x
+        self.frame_height = render.resolution_y
 
     def get_head(self, headnum):
         if headnum < 0 and len(self.heads) + headnum >= 0:
