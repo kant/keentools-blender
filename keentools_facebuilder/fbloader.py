@@ -87,8 +87,8 @@ class FBLoader:
         max_pins = -1
         for i, c in enumerate(head.cameras):
             kid = c.get_keyframe()
-            cls.set_camera_projection(
-                head.focal, head.sensor_width, rx, ry)
+            cls.set_camera_projection(head.focal, head.sensor_width, rx, ry,
+                                      keyframe=kid)
             # We are looking for keyframe that has maximum pins
             if c.has_pins():
                 if max_pins < c.pins_count:
