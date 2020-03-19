@@ -236,6 +236,19 @@ class FB_OT_PinMode(bpy.types.Operator):
         FBLoader.load_all(self.headnum, self.camnum)
         coords.update_head_mesh(settings, FBLoader.get_builder(), head)
 
+        # Fix
+        fb = FBLoader.get_builder()
+        proj_mat = fb.projection_mat_at(
+            settings.get_keyframe(self.headnum, self.camnum))
+        focal = coords.focal_by_projection_matrix(
+            proj_mat, head.sensor_width)
+        # head.get_camera(self.camnum).camobj.data.lens = focal
+        logger.debug("focal via proj_mat: {}".format(focal))
+
+        camera = head.get_camera(self.camnum)
+        camera.camobj.data.lens = camera.focal
+        # Fix
+
         # Hide geometry
         headobj.hide_set(True)
         cameras.hide_other_cameras(self.headnum, self.camnum)

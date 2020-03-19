@@ -53,8 +53,10 @@ class FBLoader:
 
     @classmethod
     def update_head_camera_focals(cls, head):
-        for c in head.cameras:
-            c.camobj.data.lens = c.focal  # fix
+        logger = logging.getLogger(__name__)
+        for i, c in enumerate(head.cameras):
+            c.camobj.data.lens = c.focal  # fixss
+            logger.debug("camera: {} focal: {}".format(i, c.focal))
 
     @classmethod
     def update_camera_params(cls, head):
@@ -87,6 +89,7 @@ class FBLoader:
         max_pins = -1
         for i, c in enumerate(head.cameras):
             kid = c.get_keyframe()
+            logger.debug("set_camera_projection focal:")
             cls.set_camera_projection(c.focal, head.sensor_width, rx, ry,  # fix
                                       keyframe=kid)
             # We are looking for keyframe that has maximum pins
@@ -277,11 +280,24 @@ class FBLoader:
         headobj = head.headobj
 
         for i, cam in enumerate(head.cameras):
-            camobj = cam.camobj
             if cam.has_pins():
                 kid = settings.get_keyframe(headnum, i)
-                cls.place_cameraobj(kid, camobj, headobj)
+                cls.place_cameraobj(kid, cam.camobj, headobj)
                 cam.set_model_mat(fb.model_mat(kid))
+
+    @classmethod
+    def update_all_camera_focals(cls, headnum):
+        fb = cls.get_builder()
+        settings = get_main_settings()
+        head = settings.get_head(headnum)
+
+        for i, cam in enumerate(head.cameras):
+            if cam.has_pins():
+                kid = settings.get_keyframe(headnum, i)
+                proj_mat = fb.projection_mat_at(kid)
+                focal = coords.focal_by_projection_matrix(
+                    proj_mat, head.sensor_width)
+                cam.focal = focal
 
     @classmethod
     def update_cam_image(cls, cam_item):

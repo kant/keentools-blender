@@ -19,7 +19,7 @@
 
 import bpy
 import numpy as np
-
+import logging
 
 from . fbloader import FBLoader
 from bpy.props import (
@@ -85,6 +85,8 @@ def update_sensor_height(self, context):
 
 
 def update_focal(self, context):
+    logger = logging.getLogger(__name__)
+    logger.debug("UPDATE_HEAD_FOCAL")
     settings = get_main_settings()
     if not settings.pinmode:
         FBLoader.update_head_camera_focals(self)
@@ -95,6 +97,8 @@ def update_focal(self, context):
 
 
 def update_camera_focal(self, context):
+    logger = logging.getLogger(__name__)
+    logger.debug("UPDATE_CAMERA_FOCAL")
     settings = get_main_settings()
     self.camobj.data.lens = self.focal
 
@@ -225,9 +229,22 @@ class FBCameraItem(PropertyGroup):
 
     orientation: IntProperty(default=0)  # angle = orientation * Pi/2
 
+    sensor_width: FloatProperty(
+        description="The length of the longest side "
+                    "of the camera sensor in millimetres",
+        name="CSensor Width (mm)", default=36,
+        min=0.1, update=update_sensor_width)
+
+    sensor_height: FloatProperty(
+        description="Secondary parameter. "
+                    "Set it according to the real camera specification."
+                    "This parameter is not used if Sensor Width is greater",
+        name="CSensor Height (mm)", default=24,
+        min=0.1, update=update_sensor_height)
+
     focal: FloatProperty(
         description="CAMERA Focal length in millimetres",
-        name="CamFocal Length (mm)", default=50,
+        name="CFocal Length (mm)", default=50,
         min=0.1, update=update_camera_focal)
 
     def update_scene_frame_size(self):
@@ -372,7 +389,7 @@ class FBHeadItem(PropertyGroup):
         min=0.1, update=update_sensor_height)
     focal: FloatProperty(
         description="Focal length in millimetres",
-        name="Focal Length (mm)", default=50,
+        name="HFocal Length (mm)", default=50,
         min=0.1, update=update_focal)
 
     auto_focal_estimation: BoolProperty(
