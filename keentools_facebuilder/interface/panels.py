@@ -232,6 +232,11 @@ class FB_PT_CameraPanel(Panel):
             Config.fb_focal_length_menu_exec_idname,
             text='', icon='SETTINGS')
 
+        if settings.current_camnum >=0:
+            layout.label(text="Camera {}".format(settings.current_camnum))
+            row = layout.row()
+            row.prop(head.get_camera(settings.current_camnum), 'focal')
+
         row = layout.row()
         row.prop(head, 'sensor_width')
         row.operator(

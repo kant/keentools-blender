@@ -87,8 +87,18 @@ def update_sensor_height(self, context):
 def update_focal(self, context):
     settings = get_main_settings()
     if not settings.pinmode:
-        FBLoader.update_all_camera_focals(self)
+        FBLoader.update_head_camera_focals(self)
 
+        state, headnum = what_is_state()
+        head = settings.get_head(headnum)
+        head.auto_focal_estimation = False
+
+
+def update_camera_focal(self, context):
+    settings = get_main_settings()
+    self.camobj.data.lens = self.focal
+
+    if not settings.pinmode:
         state, headnum = what_is_state()
         head = settings.get_head(headnum)
         head.auto_focal_estimation = False
@@ -214,6 +224,11 @@ class FBCameraItem(PropertyGroup):
     exif: PointerProperty(type=FBExifItem)
 
     orientation: IntProperty(default=0)  # angle = orientation * Pi/2
+
+    focal: FloatProperty(
+        description="CAMERA Focal length in millimetres",
+        name="CamFocal Length (mm)", default=50,
+        min=0.1, update=update_camera_focal)
 
     def update_scene_frame_size(self):
         if self.frame_width > 0 and self.frame_height > 0:

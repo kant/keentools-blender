@@ -52,9 +52,9 @@ class FBLoader:
         cam_item.update_image_size()
 
     @classmethod
-    def update_all_camera_focals(cls, head):
+    def update_head_camera_focals(cls, head):
         for c in head.cameras:
-            c.camobj.data.lens = head.focal
+            c.camobj.data.lens = c.focal  # fix
 
     @classmethod
     def update_camera_params(cls, head):
@@ -87,14 +87,14 @@ class FBLoader:
         max_pins = -1
         for i, c in enumerate(head.cameras):
             kid = c.get_keyframe()
-            cls.set_camera_projection(head.focal, head.sensor_width, rx, ry,
+            cls.set_camera_projection(c.focal, head.sensor_width, rx, ry,  # fix
                                       keyframe=kid)
             # We are looking for keyframe that has maximum pins
             if c.has_pins():
                 if max_pins < c.pins_count:
                     max_index = kid
                     max_pins = c.pins_count
-            c.camobj.data.lens = head.focal
+            c.camobj.data.lens = c.focal  # fix
             c.camobj.data.sensor_width = head.sensor_width
             c.camobj.data.sensor_height = head.sensor_height
 
@@ -178,7 +178,7 @@ class FBLoader:
         vp.pins().reset_current_pin()
         cameras.show_all_cameras(headnum)
 
-        cls.update_all_camera_focals(head)
+        cls.update_head_camera_focals(head)
         coords.update_head_mesh_neutral(cls.get_builder(), headobj)
 
         # print("CALL REVERT SIZE")
@@ -474,7 +474,7 @@ class FBLoader:
 
         rx = scene.render.resolution_x
         ry = scene.render.resolution_y
-        cls.set_camera_projection(head.focal, head.sensor_width, rx, ry,
+        cls.set_camera_projection(cam.focal, head.sensor_width, rx, ry,  # fix
                                   keyframe=cam.get_keyframe())
 
         # Update all cameras model_mat
@@ -524,7 +524,7 @@ class FBLoader:
             _exception_handling(headnum, "SOLVE EXCEPTION")
             return False
 
-        cls.auto_focal_estimation_post(head, camera.camobj)
+        cls.auto_focal_estimation_post(head, camera, keyframe=kid)
         return True
 
     @classmethod
@@ -597,10 +597,13 @@ class FBLoader:
         return img, camera
 
     @classmethod
-    def auto_focal_estimation_post(cls, head, camobj):
+    def auto_focal_estimation_post(cls, head, camera, keyframe=None):
         fb = cls.get_builder()
         if head.auto_focal_estimation:
-            proj_mat = fb.projection_mat()
+            if keyframe is not None:
+                proj_mat = fb.projection_mat_at(keyframe)
+            else:
+                proj_mat = fb.projection_mat()
             focal = coords.focal_by_projection_matrix(
                 proj_mat, head.sensor_width)
 
@@ -609,5 +612,6 @@ class FBLoader:
             if ry > rx:
                 focal = focal * rx / ry
 
-            camobj.data.lens = focal
+            camera.camobj.data.lens = focal
+            camera.focal = focal
             head.focal = focal

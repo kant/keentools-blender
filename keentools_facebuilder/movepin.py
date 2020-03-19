@@ -200,7 +200,7 @@ class FB_OT_MovePin(bpy.types.Operator):
             pins.arr()[pins.current_pin_num()] = (x, y)
 
         pins.reset_current_pin()
-        FBLoader.update_all_camera_focals(head)
+        FBLoader.update_head_camera_focals(head)
 
         self._push_previous_state()
 
