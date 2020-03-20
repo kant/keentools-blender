@@ -242,7 +242,6 @@ class FB_OT_PinMode(bpy.types.Operator):
             settings.get_keyframe(self.headnum, self.camnum))
         focal = coords.focal_by_projection_matrix(
             proj_mat, head.sensor_width)
-        # head.get_camera(self.camnum).camobj.data.lens = focal
         logger.debug("focal via proj_mat: {}".format(focal))
 
         camera = head.get_camera(self.camnum)

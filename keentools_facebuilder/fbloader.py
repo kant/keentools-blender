@@ -55,7 +55,7 @@ class FBLoader:
     def update_head_camera_focals(cls, head):
         logger = logging.getLogger(__name__)
         for i, c in enumerate(head.cameras):
-            c.camobj.data.lens = c.focal  # fixss
+            c.camobj.data.lens = c.focal  # fix
             logger.debug("camera: {} focal: {}".format(i, c.focal))
 
     @classmethod
@@ -281,7 +281,7 @@ class FBLoader:
 
         for i, cam in enumerate(head.cameras):
             if cam.has_pins():
-                kid = settings.get_keyframe(headnum, i)
+                kid = cam.get_keyframe()
                 cls.place_cameraobj(kid, cam.camobj, headobj)
                 cam.set_model_mat(fb.model_mat(kid))
 
@@ -293,10 +293,13 @@ class FBLoader:
 
         for i, cam in enumerate(head.cameras):
             if cam.has_pins():
-                kid = settings.get_keyframe(headnum, i)
+                kid = cam.get_keyframe()
                 proj_mat = fb.projection_mat_at(kid)
                 focal = coords.focal_by_projection_matrix(
                     proj_mat, head.sensor_width)
+
+                if cam.frame_width < cam.frame_height:
+                    focal = cam.frame_width / cam.frame_height * focal
                 cam.focal = focal
 
     @classmethod
@@ -621,7 +624,7 @@ class FBLoader:
             else:
                 proj_mat = fb.projection_mat()
             focal = coords.focal_by_projection_matrix(
-                proj_mat, head.sensor_width)
+                proj_mat, camera.sensor_width)  # fix
 
             # Fix for Vertical camera (because Blender has Auto in sensor)
             rx, ry = coords.render_frame()
