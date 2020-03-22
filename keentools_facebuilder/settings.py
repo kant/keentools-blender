@@ -297,7 +297,10 @@ class FBCameraItem(PropertyGroup):
             if self.orientation not in (1, 3):
                 self.background_scale = 1.0
             else:
-                self.background_scale = self.frame_width / self.frame_height
+                if self.frame_width >= self.frame_height:
+                    self.background_scale = self.frame_height / self.frame_width
+                else:
+                    self.background_scale = self.frame_width / self.frame_height
 
     def update_background(self):
         self.calc_background_scale()
