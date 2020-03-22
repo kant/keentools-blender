@@ -20,6 +20,8 @@
 import bpy
 import numpy as np
 import logging
+import math
+
 
 from . fbloader import FBLoader
 from bpy.props import (
@@ -247,11 +249,63 @@ class FBCameraItem(PropertyGroup):
         name="CFocal Length (mm)", default=50,
         min=0.1, update=update_camera_focal)
 
+    background_scale: FloatProperty(
+        description="CAMERA background image scale",
+        name="Cam BGScale", default=1.0,
+        min=0.0001)
+
     def update_scene_frame_size(self):
         if self.frame_width > 0 and self.frame_height > 0:
-            render = bpy.context.scene.render
-            render.resolution_x = self.frame_width
-            render.resolution_y = self.frame_height
+            print("orientation", self.orientation)
+            if self.orientation not in (1,3):
+                render = bpy.context.scene.render
+                render.resolution_x = self.frame_width
+                render.resolution_y = self.frame_height
+            else:
+                render = bpy.context.scene.render
+                render.resolution_x = self.frame_height
+                render.resolution_y = self.frame_width
+
+    def get_camera_background(self):
+        c = self.camobj.data
+        if len(c.background_images) == 0:
+            return None
+        else:
+            return c.background_images[0]
+
+    def reset_background_image_rotation(self):
+        background_image = self.get_camera_background()
+        if background_image is None:
+            return
+        background_image.rotation = 0
+        self.orientation = 0
+
+    def rotate_background_image(self, delta=1):
+        background_image = self.get_camera_background()
+        if background_image is None:
+            return
+
+        self.orientation += delta
+        if self.orientation < 0:
+            self.orientation += 4
+        if self.orientation >= 4:
+            self.orientation += -4
+        background_image.rotation = self.orientation * math.pi / 2
+
+    def calc_background_scale(self):
+        if self.frame_width > 0 and self.frame_height > 0:
+            if self.orientation not in (1, 3):
+                self.background_scale = 1.0
+            else:
+                self.background_scale = self.frame_width / self.frame_height
+
+    def update_background(self):
+        self.calc_background_scale()
+        background = self.get_camera_background()
+        if background is None:
+            return False
+        background.scale = self.background_scale
+        return True
 
     @staticmethod
     def convert_matrix_to_str(arr):
@@ -379,13 +433,13 @@ class FBHeadItem(PropertyGroup):
     sensor_width: FloatProperty(
         description="The length of the longest side "
                     "of the camera sensor in millimetres",
-        name="Sensor Width (mm)", default=36,
+        name="HSensor Width (mm)", default=36,
         min=0.1, update=update_sensor_width)
     sensor_height: FloatProperty(
         description="Secondary parameter. "
                     "Set it according to the real camera specification."
                     "This parameter is not used if Sensor Width is greater",
-        name="Sensor Height (mm)", default=24,
+        name="HSensor Height (mm)", default=24,
         min=0.1, update=update_sensor_height)
     focal: FloatProperty(
         description="Focal length in millimetres",

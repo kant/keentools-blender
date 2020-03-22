@@ -785,7 +785,9 @@ class FB_OT_RotateImageCW(Operator):
     def execute(self, context):
         settings = get_main_settings()
         camera = settings.get_camera(self.headnum, self.camnum)
-        cameras.rotate_background_image(camera, 1)
+        camera.rotate_background_image(1)
+        camera.update_scene_frame_size()
+        camera.update_background()
         return {'FINISHED'}
 
 
@@ -804,7 +806,9 @@ class FB_OT_RotateImageCCW(Operator):
     def execute(self, context):
         settings = get_main_settings()
         camera = settings.get_camera(self.headnum, self.camnum)
-        cameras.rotate_background_image(camera, -1)
+        camera.rotate_background_image(-1)
+        camera.update_scene_frame_size()
+        camera.update_background()
         return {'FINISHED'}
 
 
@@ -823,7 +827,9 @@ class FB_OT_ResetImageRotation(Operator):
     def execute(self, context):
         settings = get_main_settings()
         camera = settings.get_camera(self.headnum, self.camnum)
-        cameras.reset_background_image_rotation(camera)
+        camera.reset_background_image_rotation()
+        camera.update_scene_frame_size()
+        camera.update_background()
         return {'FINISHED'}
 
 
