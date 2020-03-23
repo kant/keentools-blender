@@ -256,8 +256,7 @@ class FBCameraItem(PropertyGroup):
 
     def update_scene_frame_size(self):
         if self.frame_width > 0 and self.frame_height > 0:
-            print("orientation", self.orientation)
-            if self.orientation not in (1,3):
+            if (self.orientation % 2) == 0:
                 render = bpy.context.scene.render
                 render.resolution_x = self.frame_width
                 render.resolution_y = self.frame_height
@@ -292,18 +291,19 @@ class FBCameraItem(PropertyGroup):
             self.orientation += -4
         background_image.rotation = self.orientation * math.pi / 2
 
-    def calc_background_scale(self):
-        if self.frame_width > 0 and self.frame_height > 0:
-            if self.orientation not in (1, 3):
-                self.background_scale = 1.0
+    def calculate_background_scale(self):
+        if self.frame_width <= 0 or self.frame_height <= 0:
+            return 1.0
+        if (self.orientation % 2) == 0:
+            return 1.0
+        else:
+            if self.frame_width >= self.frame_height:
+                return self.frame_height / self.frame_width
             else:
-                if self.frame_width >= self.frame_height:
-                    self.background_scale = self.frame_height / self.frame_width
-                else:
-                    self.background_scale = self.frame_width / self.frame_height
+                return self.frame_width / self.frame_height
 
-    def update_background_scale(self):
-        self.calc_background_scale()
+    def update_background_image_scale(self):
+        self.background_scale = self.calculate_background_scale()
         background = self.get_camera_background()
         if background is None:
             return False
@@ -313,7 +313,8 @@ class FBCameraItem(PropertyGroup):
     def compensate_view_scale(self):
         if self.frame_width <= 0 or self.frame_height <= 0:
             return 1.0
-        if self.orientation not in (1, 3):
+
+        if (self.orientation % 2) == 0:
             if self.frame_width >= self.frame_height:
                 return 1.0
             else:
