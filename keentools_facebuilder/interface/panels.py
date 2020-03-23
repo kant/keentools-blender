@@ -243,6 +243,8 @@ class FB_PT_CameraPanel(Panel):
             camera = head.get_camera(settings.current_camnum)
             col.prop(camera, 'focal')
             col.prop(camera, 'sensor_width')
+            col.prop(camera, 'background_scale')
+            col.label(text='compensate_scale: {:.3f}'.format(camera.compensate_view_scale()))
 
 
 class FB_PT_ExifPanel(Panel):

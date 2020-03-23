@@ -787,7 +787,7 @@ class FB_OT_RotateImageCW(Operator):
         camera = settings.get_camera(self.headnum, self.camnum)
         camera.rotate_background_image(1)
         camera.update_scene_frame_size()
-        camera.update_background()
+        camera.update_background_scale()
         return {'FINISHED'}
 
 
@@ -808,7 +808,7 @@ class FB_OT_RotateImageCCW(Operator):
         camera = settings.get_camera(self.headnum, self.camnum)
         camera.rotate_background_image(-1)
         camera.update_scene_frame_size()
-        camera.update_background()
+        camera.update_background_scale()
         return {'FINISHED'}
 
 
@@ -829,7 +829,7 @@ class FB_OT_ResetImageRotation(Operator):
         camera = settings.get_camera(self.headnum, self.camnum)
         camera.reset_background_image_rotation()
         camera.update_scene_frame_size()
-        camera.update_background()
+        camera.update_background_scale()
         return {'FINISHED'}
 
 

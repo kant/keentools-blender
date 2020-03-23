@@ -302,13 +302,27 @@ class FBCameraItem(PropertyGroup):
                 else:
                     self.background_scale = self.frame_width / self.frame_height
 
-    def update_background(self):
+    def update_background_scale(self):
         self.calc_background_scale()
         background = self.get_camera_background()
         if background is None:
             return False
         background.scale = self.background_scale
         return True
+
+    def compensate_view_scale(self):
+        if self.frame_width <= 0 or self.frame_height <= 0:
+            return 1.0
+        if self.orientation not in (1, 3):
+            if self.frame_width >= self.frame_height:
+                return 1.0
+            else:
+                return self.frame_width / self.frame_height
+
+        if self.frame_width >= self.frame_height:
+            return self.frame_height / self.frame_width
+        else:
+            return 1.0
 
     @staticmethod
     def convert_matrix_to_str(arr):

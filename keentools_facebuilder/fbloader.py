@@ -298,26 +298,7 @@ class FBLoader:
                 focal = coords.focal_by_projection_matrix(
                     proj_mat, head.sensor_width)
 
-                if cam.frame_width < cam.frame_height:
-                    focal = cam.frame_width / cam.frame_height * focal
-                cam.focal = focal
-
-    @classmethod
-    def update_cam_image(cls, cam_item):
-        """ Update camera background image """
-        cam_data = cam_item.camobj.data
-        cam_data.show_background_images = True
-
-        if len(cam_data.background_images) == 0:
-            b = cam_data.background_images.new()
-        else:
-            b = cam_data.background_images[0]
-
-        b.image = cam_item.cam_image
-
-        b.frame_method = 'CROP'
-        b.show_on_foreground = False
-        b.alpha = 1.0
+                cam.focal = focal * cam.compensate_view_scale()
 
     # --------------------
     @classmethod
