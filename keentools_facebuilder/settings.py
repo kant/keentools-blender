@@ -254,6 +254,13 @@ class FBCameraItem(PropertyGroup):
         name="Cam BGScale", default=1.0,
         min=0.0001)
 
+    auto_focal_estimation: BoolProperty(
+        name="CFocal Length Estimation",
+        description="When turned on, FaceBuilder will try to estimate "
+                    "focal length based on the position of the model "
+                    "in the frame",
+        default=True)
+
     def update_scene_frame_size(self):
         if self.frame_width > 0 and self.frame_height > 0:
             if (self.orientation % 2) == 0:
@@ -509,6 +516,11 @@ class FBHeadItem(PropertyGroup):
         default=True)
 
     exif: PointerProperty(type=FBExifItem)
+
+    switch: EnumProperty(name="Estimation", items=[
+                ('global', 'Global', 'Global settings', 'UV', 0),
+                ('local', 'Local', 'Global settings', 'UV', 1)
+                ], description="Estimation settings")
 
     def update_scene_frame_size(self, camnum):
         cam = self.get_camera(camnum)

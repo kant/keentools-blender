@@ -238,9 +238,12 @@ class FB_PT_CameraPanel(Panel):
             text='', icon='SETTINGS')
 
         if settings.current_camnum >=0:
-            layout.label(text="Camera {}".format(settings.current_camnum))
-            col = layout.column()
             camera = head.get_camera(settings.current_camnum)
+            layout.label(text="Camera {}".format(settings.current_camnum))
+            layout.prop(camera, 'auto_focal_estimation')
+            layout.prop(head, 'switch', expand=True)
+
+            col = layout.column()
             col.prop(camera, 'focal')
             col.prop(camera, 'sensor_width')
             col.prop(camera, 'background_scale')
@@ -279,6 +282,8 @@ class FB_PT_ExifPanel(Panel):
 
         if head is None:
             return
+
+        layout.operator(Config.fb_read_exif_menu_exec_idname)
 
         # Show EXIF info message
         if len(head.exif.info_message) > 0:
