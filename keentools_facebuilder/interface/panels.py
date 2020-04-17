@@ -237,7 +237,7 @@ class FB_PT_CameraPanel(Panel):
             Config.fb_sensor_size_window_idname,
             text='', icon='SETTINGS')
 
-        if settings.current_camnum >=0:
+        if settings.current_camnum >= 0:
             camera = head.get_camera(settings.current_camnum)
             layout.label(text="Camera {}".format(settings.current_camnum))
             layout.prop(camera, 'auto_focal_estimation')
@@ -371,7 +371,8 @@ class FB_PT_ViewsPanel(Panel):
             view_icon = 'PINNED' if camera.has_pins() else 'HIDE_OFF'
 
             col = row.column()
-            cam_name = camera.get_image_name()
+            cam_name = "[{}] {}".format(camera.image_group,
+                                        camera.get_image_name())
             if settings.current_camnum == i and settings.pinmode:
                 col.prop(settings, 'blue_camera_button', toggle=1,
                          text=cam_name, icon=view_icon)

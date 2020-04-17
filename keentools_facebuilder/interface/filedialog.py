@@ -326,7 +326,8 @@ class FB_OT_MultipleFilebrowser(Operator, ImportHelper):
         for camera in head.cameras:
             setup_camera_from_exif(camera)
 
-        logger.debug(
-            'IMAGE GROUPS: {}'.format(str(detect_image_groups_by_exif(head))))
-
+        groups = detect_image_groups_by_exif(head)
+        for i, cam in enumerate(head.cameras):
+            cam.image_group = groups[i]
+        logger.debug('IMAGE GROUPS: {}'.format(str(groups)))
         return {'FINISHED'}

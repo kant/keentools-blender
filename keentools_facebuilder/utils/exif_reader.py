@@ -347,11 +347,7 @@ def update_exif_sizes_message(headnum, image):
 
 
 def setup_camera_from_exif(camera):
-    img = camera.get_camera_background()
-    if img is not None:
-        real_w, real_h = img.image.size
-    else:
-        real_w, real_h = -1, -1
+    real_w, real_h = camera.get_background_size()
 
     if camera.exif.focal35mm > 0:
         camera.sensor_width = 36.0
@@ -409,6 +405,18 @@ def _exif_hash_string(exif):
     ])
 
 
+def _image_size_hash_string(camera):
+    w, h = camera.get_background_size()
+    if h > w:
+        w, h = h, w
+    return "{}:{}".format(w, h)
+
+
+def _exif_and_size_hash_string(camera):
+    return "{}#{}".format(_exif_hash_string(camera.exif),
+                          _image_size_hash_string(camera))
+
+
 def _all_fields_dump(exif):
     return "\n".join(["{}:{}".format(p, getattr(exif, p)) for p in _exif_fields()])
 
@@ -420,11 +428,12 @@ def copy_exif_parameters_from_camera_to_head(camera, head):
     head.exif.info_message += "\n=====\n" + _all_fields_dump(camera.exif)
 
 
-def detect_image_groups_by_exif(head, hash_func=_exif_hash_string):
-    hashes = [hash_func(cam.exif) for cam in head.cameras]
-    unique_hashes = list(set(hashes))
-    groups = [unique_hashes.index(x) for x in hashes]
-    return groups
+def detect_image_groups_by_exif(head, hash_func=_exif_and_size_hash_string):
+    hashes = [hash_func(cam) for cam in head.cameras]
+    # unique_hashes = list(set(hashes))
+    unique_hashes = []
+    _ = [unique_hashes.append(x) for x in hashes if x not in unique_hashes]
+    return [unique_hashes.index(x) for x in hashes]
 
 
 def read_exif_from_camera(headnum, camnum):

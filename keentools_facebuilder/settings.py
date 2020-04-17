@@ -261,6 +261,8 @@ class FBCameraItem(PropertyGroup):
                     "in the frame",
         default=True)
 
+    image_group: IntProperty(default=0)
+
     def update_scene_frame_size(self):
         if self.frame_width > 0 and self.frame_height > 0:
             if (self.orientation % 2) == 0:
@@ -278,6 +280,13 @@ class FBCameraItem(PropertyGroup):
             return None
         else:
             return c.background_images[0]
+
+    def get_background_size(self):
+        img = self.get_camera_background()
+        if img is not None:
+            return img.image.size
+        else:
+            return -1, -1
 
     def reset_background_image_rotation(self):
         background_image = self.get_camera_background()
@@ -518,8 +527,9 @@ class FBHeadItem(PropertyGroup):
     exif: PointerProperty(type=FBExifItem)
 
     switch: EnumProperty(name="Estimation", items=[
-                ('global', 'Global', 'Global settings', 'UV', 0),
-                ('local', 'Local', 'Global settings', 'UV', 1)
+                ('global', 'All the same', '', 'LINKED', 0),
+                ('group', 'Different', '', 'LINKED', 1),
+                ('local', 'Isolated', '', 'UNLINKED', 2)
                 ], description="Estimation settings")
 
     def update_scene_frame_size(self, camnum):
