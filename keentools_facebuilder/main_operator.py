@@ -176,11 +176,14 @@ class FB_OT_CenterGeo(Operator):
         settings = get_main_settings()
         headnum = self.headnum
         camnum = self.camnum
-
-        fb = FBLoader.get_builder()
+        head = settings.get_head(headnum)
+        camera = head.get_camera(camnum)
         kid = settings.get_keyframe(headnum, camnum)
 
-        fb.center_model_mat(kid)
+        fb = FBLoader.get_builder()
+        proj = camera.get_projection_matrix()
+        print(proj)
+        fb.center_model_mat(kid, proj)
         FBLoader.fb_save(headnum, camnum)
 
         manipulate.push_neutral_head_in_undo_history(
@@ -417,7 +420,7 @@ class FB_OT_AddCamera(Operator):
 
         # Warning! Loading camera may cause data loss
         if settings.get_head(headnum).cameras:
-            FBLoader.load_only(headnum)
+            FBLoader.load_model(headnum)
 
         camera = FBLoader.add_camera(headnum, None)
         FBLoader.set_keentools_version(camera.camobj)
@@ -856,7 +859,7 @@ class FB_OT_ResetExpression(Operator):
         if not head.has_camera(settings.current_camnum):
             return {'CANCELLED'}
 
-        FBLoader.load_only(self.headnum)
+        FBLoader.load_model(self.headnum)
         fb = FBLoader.get_builder()
         fb.reset_to_neutral_emotions(
             head.get_keyframe(settings.current_camnum))

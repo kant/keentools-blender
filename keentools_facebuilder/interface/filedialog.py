@@ -323,11 +323,15 @@ class FB_OT_MultipleFilebrowser(Operator, ImportHelper):
             settings.frame_height = h
 
         # New
-        for camera in head.cameras:
+        fb = FBLoader.get_builder()
+        for camera in head.cameras:  # TODO: Not all cameras should change!
             setup_camera_from_exif(camera)
+            projection_mat = camera.get_projection_matrix()
+            fb.center_model_mat(camera.get_keyframe(), projection_mat)
 
         groups = detect_image_groups_by_exif(head)
         for i, cam in enumerate(head.cameras):
             cam.image_group = groups[i]
         logger.debug('IMAGE GROUPS: {}'.format(str(groups)))
+        FBLoader.save_only(self.headnum)
         return {'FINISHED'}

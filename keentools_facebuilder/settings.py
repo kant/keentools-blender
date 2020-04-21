@@ -41,6 +41,16 @@ from . config import Config, get_main_settings, get_operators
 from .utils.manipulate import what_is_state
 
 
+def update_focal_length_mode(self, context):
+    print("value: ", context)
+    print("mode:", self.focal_estimation_mode)
+    fb = FBLoader.get_builder()
+    fb.set_focal_length_estimation_mode(self.focal_estimation_mode)
+    print(fb.focal_length_estimation_mode())
+    settings = get_main_settings()
+    FBLoader.save_only(settings.current_headnum)
+
+
 def update_emotions(self, context):
     settings = get_main_settings()
     if not settings.pinmode:
@@ -140,7 +150,7 @@ def update_mesh_parts(self, context):
         keyframe = None
 
     old_mesh = head.headobj.data
-    FBLoader.load_only(headnum)
+    FBLoader.load_model(headnum)
     # Create new mesh
     mesh = FBLoader.get_builder_mesh(FBLoader.get_builder(), 'FBHead_tmp_mesh',
                                      head.get_masks(),
@@ -456,6 +466,12 @@ class FBCameraItem(PropertyGroup):
         else:
             return 'N/A'
 
+    def get_projection_matrix(self):
+        projection = coords.projection_matrix(
+            self.frame_width, self.frame_height, self.focal, 36.0,
+            0.1, 1000)
+        return projection
+
 
 class FBHeadItem(PropertyGroup):
     mod_ver: IntProperty(name="Modifier Version", default=-1)
@@ -531,6 +547,12 @@ class FBHeadItem(PropertyGroup):
                 ('group', 'Different', '', 'LINKED', 1),
                 ('local', 'Isolated', '', 'UNLINKED', 2)
                 ], description="Estimation settings")
+
+    focal_estimation_mode: EnumProperty(name='Estimation Mode', items=[
+        ('FB_FIXED_FOCAL_LENGTH_ALL_FRAMES', 'No estimation', 'LINKED', 0),
+        ('FB_ESTIMATE_STATIC_FOCAL_LENGTH', 'One focus to all', 'LINKED', 1),
+        ('FB_ESTIMATE_VARYING_FOCAL_LENGTH', 'Varying', 'LINKED', 2)
+    ], description='Estimation Mode value', update=update_focal_length_mode)
 
     def update_scene_frame_size(self, camnum):
         cam = self.get_camera(camnum)

@@ -134,7 +134,11 @@ class FB_OT_PinMode(bpy.types.Operator):
 
         head.need_update = False
         # Reload pins surface points
-        FBLoader.load_all(headnum, camnum)
+        # FBLoader.load_all(headnum, camnum)
+        FBLoader.load_model(headnum)
+        FBLoader.place_camera(headnum, camnum)
+        FBLoader.load_pins(headnum, camnum)
+
         kid = settings.get_keyframe(headnum, camnum)
         fb = FBLoader.get_builder()
 
@@ -222,31 +226,39 @@ class FB_OT_PinMode(bpy.types.Operator):
 
         hide_ui_elements()
 
-        head.update_scene_frame_size(self.camnum)
-        head.get_camera(self.camnum).update_background_image_scale()
-
         # Current headnum & camnum in global settings object
         settings.current_headnum = self.headnum
         settings.current_camnum = self.camnum
+
+        camera = head.get_camera(self.camnum)
+        camera.update_scene_frame_size()
+        camera.update_background_image_scale()
 
         logger.debug("PINMODE START H{} C{}".format(self.headnum, self.camnum))
         FBDebug.add_event_to_queue(
             'PINMODE_START', self.headnum, self.camnum,
             coords.get_raw_camera_2d_data(context))
 
-        FBLoader.load_all(self.headnum, self.camnum)
+        FBLoader.load_model(self.headnum)
+        FBLoader.place_camera(self.headnum, self.camnum)
+        FBLoader.load_pins(self.headnum, self.camnum)
         coords.update_head_mesh(settings, FBLoader.get_builder(), head)
 
         # Fix
         fb = FBLoader.get_builder()
-        proj_mat = fb.projection_mat_at(
+        mode = fb.focal_length_estimation_mode()
+        logger.debug("focal estimation mode: {}".format(mode))
+        head.focal_estimation_mode = mode
+
+        proj_mat = fb.projection_mat(
             settings.get_keyframe(self.headnum, self.camnum))
         focal = coords.focal_by_projection_matrix(
             proj_mat, head.sensor_width)
         logger.debug("focal via proj_mat: {}".format(focal))
 
-        camera = head.get_camera(self.camnum)
         camera.camobj.data.lens = camera.focal
+        kid = settings.get_keyframe(self.headnum, self.camnum)
+        FBLoader.place_cameraobj(kid, camera.camobj, head.headobj)
         # Fix
 
         # Hide geometry
@@ -261,7 +273,6 @@ class FB_OT_PinMode(bpy.types.Operator):
         vp.register_handlers(args, context)
         context.window_manager.modal_handler_add(self)
 
-        kid = settings.get_keyframe(self.headnum, self.camnum)
         vp.update_surface_points(FBLoader.get_builder(), headobj, kid)
 
         # Can start much more times when not out from pinmode
