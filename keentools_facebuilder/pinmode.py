@@ -104,7 +104,7 @@ class FB_OT_PinMode(bpy.types.Operator):
         del FBLoader.viewport().pins().arr()[nearest]
         logging.debug("PIN REMOVED {}".format(nearest))
 
-        if not FBLoader.solve(headnum, camnum):
+        if not FBLoader.solve(headnum, camnum, True):
             logger = logging.getLogger(__name__)
             logger.error("DELETE PIN PROBLEM")
             return {'FINISHED'}

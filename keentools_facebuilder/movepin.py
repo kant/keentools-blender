@@ -189,6 +189,11 @@ class FB_OT_MovePin(bpy.types.Operator):
         pins.reset_current_pin()
         FBLoader.update_head_camera_focals(head)
 
+        if not FBLoader.solve(headnum, camnum, True):
+            logger = logging.getLogger(__name__)
+            logger.error("MOVE PIN PROBLEM")
+            return {'FINISHED'}
+
         self._push_previous_state()
 
         fb = FBLoader.get_builder()
@@ -227,7 +232,7 @@ class FB_OT_MovePin(bpy.types.Operator):
 
         self._pin_drag(kid, context, mouse_x, mouse_y)
 
-        if not FBLoader.solve(headnum, camnum):
+        if not FBLoader.solve(headnum, camnum, False):
             logger = logging.getLogger(__name__)
             logger.error("MOVE PIN PROBLEM")
             return {'FINISHED'}

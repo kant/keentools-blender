@@ -474,7 +474,7 @@ class FBLoader:
         return focal
 
     @classmethod
-    def solve(cls, headnum, camnum):
+    def solve(cls, headnum, camnum, not_async):
         def _exception_handling(headnum, msg, license_err=True):
             logger = logging.getLogger(__name__)
             logger.error(msg)
@@ -560,7 +560,7 @@ class FBLoader:
         fb.set_focal_length_estimation_mode(mode)
 
         try:
-            fb.solve_for_current_pins(kid)
+            fb.solve_for_current_pins(kid, not not_async)
         except pkt.module().UnlicensedException:
             _exception_handling(headnum, 'SOLVE LICENSE EXCEPTION')
             return False

@@ -240,7 +240,7 @@ class FB_OT_RemovePins(Operator):
             settings.get_head(headnum), 'Before Remove pins')
 
         fb.remove_pins(kid)
-        FBLoader.solve(headnum, camnum)  # is it needed?
+        FBLoader.solve(headnum, camnum, True)  # is it needed?
 
         FBLoader.fb_save(headnum, camnum)
         FBLoader.fb_redraw(headnum, camnum)
