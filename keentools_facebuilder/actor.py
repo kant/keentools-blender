@@ -17,6 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import logging
+import math
 
 import bpy
 from bpy.props import (
@@ -29,6 +30,9 @@ from .config import Config, get_main_settings, get_operators, ErrorType
 from .utils.exif_reader import (update_image_groups,
                                 auto_setup_camera_from_exif,
                                 is_size_compatible_with_group)
+from .utils.blendshapes import (create_all_sliders,
+                                create_fake_blendshapes,
+                                create_drivers)
 
 
 class FB_OT_Actor(bpy.types.Operator):
@@ -56,6 +60,19 @@ class FB_OT_Actor(bpy.types.Operator):
 
         elif self.action == 'unhide_head':
             manipulate.unhide_head(self.headnum)
+
+        elif self.action == 'generate_blendshapes':
+            settings = get_main_settings()
+            head = settings.get_head(self.headnum)
+
+            create_fake_blendshapes(head.headobj)
+            main_obj, empties = create_all_sliders()
+            create_drivers(head.headobj, empties)
+            head.headobj.data.update()
+
+            main_obj.location = (2, 0, 0)
+            main_obj.rotation_euler = (0.5 * math.pi, 0, 0)
+            bpy.context.space_data.overlay.show_relationship_lines = False
 
         return {'FINISHED'}
 

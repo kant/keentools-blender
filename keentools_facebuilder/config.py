@@ -202,6 +202,7 @@ class Config:
     fb_colors_panel_idname = _PT + 'colors_panel'
     fb_model_panel_idname = _PT + 'model_panel'
     fb_pin_settings_panel_idname = _PT + 'pin_settings_panel'
+    fb_blendshapes_panel_idname = _PT + 'blendshapes'
 
     # Help ids
     fb_help_camera_callname = 'help_camera'
