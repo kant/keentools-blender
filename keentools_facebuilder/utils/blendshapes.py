@@ -19,6 +19,7 @@
 import math
 import bpy
 import numpy as np
+import csv
 
 
 def link_object_to_scene(obj):
@@ -88,8 +89,8 @@ def create_slider(name, label='Label', width=1.0, height=0.2):
     return rect, em
 
 
-def all_blendshapes_names():
-    arr = [
+def all_blendshapes_apple():
+    return [
         'cheekSquint_R', 'eyeBlink_L', 'mouthSmile_R', 'cheekSquint_L',
         'mouthPucker', 'mouthSmile_L', 'mouthShrugUpper', 'mouthRight',
         'jawLeft', 'browDown_L', 'mouthRollUpper', 'mouthLowerDown_L',
@@ -103,11 +104,50 @@ def all_blendshapes_names():
         'mouthStretch_L', 'eyeLookOut_L', 'eyeLookIn_L', 'mouthShrugLower',
         'eyeLookUp_R', 'mouthFrown_R', 'browOuterUp_R', 'eyeSquint_L',
         'eyeWide_L', 'cheekPuff', 'browOuterUp_L', 'mouthPress_L']
+
+
+def all_blendshapes_ue():
+    return [
+        'eyeBlinkRight', 'eyeLookDownRight', 'eyeLookInRight',
+        'eyeLookOutRight', 'eyeLookUpRight', 'eyeSquintRight',
+        'eyeWideRight', 'eyeBlinkLeft', 'eyeLookDownLeft',
+        'eyeLookInLeft', 'eyeLookOutLeft', 'eyeLookUpLeft',
+        'eyeSquintLeft', 'eyeWideLeft', 'jawForward', 'jawRight',
+        'jawLeft', 'jawOpen', 'mouthClose', 'mouthFunnel',
+        'mouthPucker', 'mouthRight', 'mouthLeft', 'mouthSmileRight',
+        'mouthSmileLeft', 'mouthFrownRight', 'mouthFrownLeft',
+        'mouthDimpleRight', 'mouthDimpleLeft', 'mouthStretchRight',
+        'mouthStretchLeft', 'mouthRollLower', 'mouthRollUpper',
+        'mouthShrugLower', 'mouthShrugUpper', 'mouthPressRight',
+        'mouthPressLeft', 'mouthLowerDownRight', 'mouthLowerDownLeft',
+        'mouthUpperUpRight', 'mouthUpperUpLeft', 'browDownRight',
+        'browDownLeft', 'browInnerUp', 'browOuterUpRight',
+        'browOuterUpLeft', 'cheekPuff', 'cheekSquintRight',
+        'cheekSquintLeft', 'noseSneerRight', 'noseSneerLeft',
+        'tongueOut',
+        'HeadYaw', 'HeadPitch', 'HeadRoll',
+        'LeftEyeYaw', 'LeftEyePitch', 'LeftEyeRoll',
+        'RightEyeYaw', 'RightEyePitch', 'RightEyeRoll']
+
+
+def all_blendshapes_names():
+    return all_blendshapes_ue()[:52]
+
+
+def all_blendshapes_names_sorted():
+    arr = all_blendshapes_names()
     arr.sort()
     return arr
 
 
-def create_all_sliders():
+def get_all_shape_keys_names(obj):
+    res = []
+    for kb in obj.data.shape_keys.key_blocks:
+        res.append(kb.name)
+    return res[1:]
+
+
+def create_all_blendshapes_sliders(obj):
     width = 1.0
     height = 0.2
 
@@ -123,7 +163,7 @@ def create_all_sliders():
     main_rect = create_slider_rectangle('rig', panel_width, panel_height)
     link_object_to_scene(main_rect)
 
-    blendshapes = all_blendshapes_names()
+    blendshapes = get_all_shape_keys_names(obj)
     i = 0
     j = 0
     empties = {}
@@ -161,10 +201,45 @@ def create_fake_blendshapes(obj):
 def create_drivers(obj, empties_dict):
     for kb in obj.data.shape_keys.key_blocks[1:]:
         res = kb.driver_add('value')
-        drv = res.driver
-        drv.type = 'AVERAGE'
-        drv_var = drv.variables.new()
+        res.driver.type = 'AVERAGE'
+        drv_var = res.driver.variables.new()
         drv_var.name = 'DriverName'
         drv_var.type = 'SINGLE_PROP'
         drv_var.targets[0].id = empties_dict[kb.name]
         drv_var.targets[0].data_path = 'location.x'
+
+
+def read_csv_data(filename):
+    results = []
+    with open(filename) as csv_file:
+        reader = csv.reader(csv_file, delimiter=',', quotechar=',',
+                            quoting=csv.QUOTE_MINIMAL)
+        for row in reader:
+            results.append(row)
+    return results
+
+
+def parse_row(frame, row, empties_dict):
+    timecode = row[0]
+    names = all_blendshapes_ue()
+    for i, v in enumerate(row[2:54]):
+        obj = empties_dict[names[i]]
+        obj.location.x = float(v)
+        obj.keyframe_insert('location',index=0, frame=frame)
+
+
+def get_control_empties(obj):
+    res = {}
+    for d in obj.data.shape_keys.animation_data.drivers:
+        blendshape_name = d.data_path.split('"')[1]
+        res[blendshape_name] = d.driver.variables[0].targets[0].id
+    return res
+
+
+def load_animation(obj, filepath):
+    empties_dict = get_control_empties(obj)
+    data = read_csv_data(filepath)
+    frame = 1
+    for row in data[1:]:
+        parse_row(frame, row, empties_dict)
+        frame += 1

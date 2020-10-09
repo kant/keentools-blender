@@ -136,6 +136,10 @@ class Config:
     fb_single_filebrowser_idname = \
         operators + '.' + fb_single_filebrowser_callname
 
+    fb_animation_filebrowser_callname = 'open_animation_filebrowser'
+    fb_animation_filebrowser_idname = \
+        operators + '.' + fb_animation_filebrowser_callname
+
     fb_single_filebrowser_exec_callname = 'open_single_filebrowser_exec'
     fb_single_filebrowser_exec_idname = \
         operators + '.' + fb_single_filebrowser_exec_callname

@@ -745,3 +745,8 @@ class FB_PT_BlendShapesPanel(Panel):
             Config.fb_actor_idname,
             text='Generate sliders')
         op.action = 'generate_blendshapes'
+
+        op = box.operator(
+            Config.fb_actor_idname,
+            text='Load animation')
+        op.action = 'load_animation'
