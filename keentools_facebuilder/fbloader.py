@@ -24,6 +24,7 @@ import numpy as np
 
 from .viewport import FBViewport
 from .utils import attrs, coords, cameras
+from .utils.images import load_rgba
 from .utils.other import FBStopShaderTimer, restore_ui_elements
 from .utils.exif_reader import update_image_groups, reload_all_camera_exif
 
@@ -238,8 +239,9 @@ class FBLoader:
             return
         fb = FBLoader.get_builder()
         projection = camera.get_projection_matrix()
-        fb.set_centered_geo_keyframe(camera.get_keyframe(), projection,
-                                     camera.get_oriented_image_size())
+
+        image = load_rgba(camera)
+        fb.detect_face_pose(camera.get_keyframe(), image)
 
     # --------------------
     @classmethod
