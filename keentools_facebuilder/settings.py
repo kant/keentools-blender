@@ -17,13 +17,11 @@
 # ##### END GPL LICENSE BLOCK #####
 
 
-import bpy
-import numpy as np
 import logging
 import math
 
-
-from . fbloader import FBLoader
+import bpy
+import numpy as np
 from bpy.props import (
     BoolProperty,
     IntProperty,
@@ -32,11 +30,14 @@ from bpy.props import (
     FloatVectorProperty,
     PointerProperty,
     CollectionProperty,
-    EnumProperty
+    EnumProperty,
+    BoolVectorProperty
 )
 from bpy.types import PropertyGroup
+
+from .config import Config, get_main_settings, get_operators
+from .fbloader import FBLoader
 from .utils import coords
-from . config import Config, get_main_settings, get_operators
 from .utils.manipulate import what_is_state
 
 
@@ -52,12 +53,19 @@ def update_emotions(self, context):
         FBLoader.fb_redraw(settings.current_headnum, settings.current_camnum)
 
 
-def update_wireframe(self, context):
+def update_wireframe_image(self, context):
     settings = get_main_settings()
-    headnum = settings.current_headnum
-    head = settings.get_head(headnum)
-    FBLoader.viewport().update_wireframe(head.headobj)
+    vp = FBLoader.viewport()
+    wf = vp.wireframer()
+    wf.init_colors((settings.wireframe_color,
+                    settings.wireframe_special_color,
+                    settings.wireframe_midline_color),
+                    settings.wireframe_opacity)
+    wf.init_wireframe_image(FBLoader.get_builder(), settings.show_specials)
+    vp.update_wireframe()
 
+def update_wireframe(self, context):
+    FBLoader.viewport().update_wireframe()
 
 def update_pin_sensitivity(self, context):
     FBLoader.viewport().update_pin_sensitivity()
@@ -105,8 +113,6 @@ def update_camera_focal(self, context):
 
     fb = FBLoader.get_builder()
     if fb.is_key_at(kid):
-        fb.update_projection_mat(kid, self.get_projection_matrix())
-        fb.update_image_size(kid, self.get_oriented_image_size())
         FBLoader.save_only(settings.current_headnum)
 
     if FBLoader.in_pin_drag() or self.auto_focal_estimation or \
@@ -141,7 +147,8 @@ def update_blue_head_button(self, context):
         settings.blue_head_button = True
 
 
-def update_mesh_parts(self, context):
+def update_mesh_geometry(self, context):
+    logger = logging.getLogger(__name__)
     settings = get_main_settings()
     state, headnum = what_is_state()
 
@@ -156,8 +163,21 @@ def update_mesh_parts(self, context):
 
     old_mesh = head.headobj.data
     FBLoader.load_model(headnum)
+
+    fb = FBLoader.get_builder()
+    models = [x.name for x in fb.models_list()]
+    if (head.model_type in models):
+        model_index = models.index(head.model_type)
+    else:
+        logger.error('MODEL_TYPE_NOT_FOUND (Reset to default)')
+        model_index = 0
+        head.model_type = models[model_index]
+
+    fb.select_model(model_index)
+    logger.debug('MODEL_TYPE: [{}] {}'.format(model_index, head.model_type))
+
     # Create new mesh
-    mesh = FBLoader.get_builder_mesh(FBLoader.get_builder(), 'FBHead_tmp_mesh',
+    mesh = FBLoader.get_builder_mesh(fb, 'FBHead_tmp_mesh',
                                      head.get_masks(),
                                      uv_set=head.tex_uv_shape,
                                      keyframe=keyframe)
@@ -168,11 +188,13 @@ def update_mesh_parts(self, context):
     except Exception:
         pass
     head.headobj.data = mesh
+    FBLoader.save_only(headnum)
+
     if settings.pinmode:
         # Update wireframe structures
         FBLoader.viewport().wireframer().init_geom_data(head.headobj)
-        FBLoader.viewport().wireframer().init_edge_indices(head.headobj)
-        FBLoader.viewport().update_wireframe(head.headobj)
+        FBLoader.viewport().wireframer().init_edge_indices(FBLoader.get_builder())
+        FBLoader.viewport().update_wireframe()
 
     mesh_name = old_mesh.name
     # Delete old mesh
@@ -497,6 +519,28 @@ class FBCameraItem(PropertyGroup):
         return self.image_group == -1
 
 
+def uv_items_callback(self, context):
+    fb = FBLoader.get_builder()
+    res = []
+    for i, name in enumerate(fb.uv_sets_list()):
+        res.append(('uv{}'.format(i), name, '', 'UV', i))
+    return res
+
+
+def _get_icon_by_lod(level_of_detail):
+    icons = {'HIGH_POLY': 'SHADING_WIRE',
+             'MID_POLY': 'MESH_UVSPHERE',
+             'LOW_POLY': 'META_BALL'}
+    if level_of_detail in icons.keys():
+        return icons[level_of_detail]
+    return 'BLANK1'
+
+
+def model_type_callback(self, context):
+    return [(x.name, x.name, '', _get_icon_by_lod(x.level_of_detail), i)
+            for i, x in enumerate(FBLoader.get_builder().models_list())]
+
+
 class FBHeadItem(PropertyGroup):
     use_emotions: bpy.props.BoolProperty(name="Allow facial expressions",
                                          default=False, update=update_emotions)
@@ -524,36 +568,19 @@ class FBHeadItem(PropertyGroup):
                     "in the frame",
         default=False)
 
-    check_ears: BoolProperty(name="Ears", default=True,
-                             update=update_mesh_parts)
-    check_eyes: BoolProperty(name="Eyes", default=True,
-                             update=update_mesh_parts)
-    check_face: BoolProperty(name="Face", default=True,
-                             update=update_mesh_parts)
-    check_headback: BoolProperty(name="Headback", default=True,
-                                 update=update_mesh_parts)
-    check_jaw: BoolProperty(name="Jaw", default=True,
-                            update=update_mesh_parts)
-    check_mouth: BoolProperty(name="Mouth", default=True,
-                              update=update_mesh_parts)
-    check_neck: BoolProperty(name="Neck", default=True,
-                             update=update_mesh_parts)
-    check_nose: BoolProperty(name="Nose", default=True,
-                             update=update_mesh_parts)
+    masks: BoolVectorProperty(name='Masks', description='Head parts visibility',
+                              size=12, subtype='NONE',
+                              default=(True, True, True, True, True, True,
+                                       True, True, True, True, True, True),
+                              update=update_mesh_geometry)
 
     serial_str: StringProperty(name="Serialization string", default="")
     tmp_serial_str: StringProperty(name="Temporary Serialization", default="")
     need_update: BoolProperty(name="Mesh need update", default=False)
 
-    tex_uv_shape: EnumProperty(name="UV", items=[
-                ('uv0', 'Butterfly', 'A one-seam layout for common use',
-                 'UV', 0),
-                ('uv1', 'Legacy',
-                 'A layout with minimal distortions but many seams', 'UV', 1),
-                ('uv2', 'Spherical', 'A wrap-around layout', 'UV', 2),
-                ('uv3', 'Maxface',
-                 'Maximum face resolution, low uniformness', 'UV', 3),
-                ], description="UV Layout", update=update_mesh_parts)
+    tex_uv_shape: EnumProperty(name="UV", items=uv_items_callback,
+                               description="UV Layout",
+                               update=update_mesh_geometry)
 
     use_exif: BoolProperty(
         name="Use EXIF if available in file",
@@ -589,6 +616,10 @@ class FBHeadItem(PropertyGroup):
         name="Scale", default=1.0, min=0.01, max=100.0,
         update=update_model_scale)
 
+    model_type: EnumProperty(name='Topology', items=model_type_callback,
+                             description='Model selector',
+                             update=update_mesh_geometry)
+
     def get_camera(self, camnum):
         if camnum < 0 and len(self.cameras) + camnum >= 0:
             return self.cameras[len(self.cameras) + camnum]
@@ -596,6 +627,12 @@ class FBHeadItem(PropertyGroup):
             return self.cameras[camnum]
         else:
             return None
+
+    def get_camera_by_keyframe(self, keyframe):
+        for camera in self.cameras:
+            if camera.get_keyframe() == keyframe:
+                return camera
+        return None
 
     def get_last_camera(self):
         return self.get_camera(self.get_last_camnum())
@@ -656,14 +693,12 @@ class FBHeadItem(PropertyGroup):
         # Dir name of current scene
         self.headobj[Config.fb_dir_prop_name[0]] = bpy.path.abspath("//")
 
-
     def should_use_emotions(self):
         return self.use_emotions
 
     def get_masks(self):
-        return (self.check_ears, self.check_eyes, self.check_face,
-                self.check_headback, self.check_jaw, self.check_mouth,
-                self.check_neck, self.check_nose)
+        fb = FBLoader.get_builder()
+        return self.masks[:len(fb.masks())]
 
     def smart_mode(self):
         return self.view_mode == 'smart'
@@ -719,22 +754,27 @@ class FBSceneSettings(PropertyGroup):
     wireframe_opacity: FloatProperty(
         description="From 0.0 to 1.0",
         name="Wireframe opacity",
-        default=0.35, min=0.0, max=1.0,
+        default=0.3, min=0.0, max=1.0,
         update=update_wireframe)
     wireframe_color: FloatVectorProperty(
         description="Color of mesh wireframe in pin-mode",
         name="Wireframe Color", subtype='COLOR',
-        default=Config.default_scheme1, min=0.0, max=1.0,
-        update=update_wireframe)
+        default=Config.color_schemes['default'][0], min=0.0, max=1.0,
+        update=update_wireframe_image)
     wireframe_special_color: FloatVectorProperty(
         description="Color of special parts in pin-mode",
         name="Wireframe Special Color", subtype='COLOR',
-        default=Config.default_scheme2, min=0.0, max=1.0,
-        update=update_wireframe)
+        default=Config.color_schemes['default'][1], min=0.0, max=1.0,
+        update=update_wireframe_image)
+    wireframe_midline_color: FloatVectorProperty(
+        description="Color of midline in pin-mode",
+        name="Wireframe Midline Color", subtype='COLOR',
+        default=Config.midline_color, min=0.0, max=1.0,
+        update=update_wireframe_image)
     show_specials: BoolProperty(
         description="Use different colors for important head parts "
                     "on the mesh",
-        name="Special face parts", default=True, update=update_wireframe)
+        name="Special face parts", default=True, update=update_wireframe_image)
     overall_opacity: FloatProperty(
         description="Overall opacity in pin-mode.",
         name="Overall opacity",
@@ -826,6 +866,9 @@ class FBSceneSettings(PropertyGroup):
             return self.heads[headnum]
         else:
             return None
+
+    def get_current_head(self):
+        return self.heads[self.current_headnum]
 
     def get_camera(self, headnum, camnum):
         head = self.get_head(headnum)

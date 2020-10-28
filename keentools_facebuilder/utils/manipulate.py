@@ -136,8 +136,9 @@ def get_operation():
 def unhide_head(headnum):
     settings = get_main_settings()
     head = settings.get_head(headnum)
+    FBLoader.load_model(headnum)
     coords.update_head_mesh_neutral(FBLoader.get_builder(), head.headobj)
-    settings.get_head(headnum).headobj.hide_set(False)
+    head.headobj.hide_set(False)
     settings.pinmode = False
 
 
@@ -285,7 +286,7 @@ def reconstruct_by_head():
             auto_setup_camera_from_exif(camera)
 
             logger.debug("CAMERA CREATED {}".format(kid))
-            FBLoader.place_cameraobj(kid, camera.camobj, obj)
+            FBLoader.place_camera(headnum, i)
             camera.set_model_mat(fb.model_mat(kid))
             FBLoader.update_pins_count(headnum, i)
 

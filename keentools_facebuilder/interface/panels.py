@@ -25,7 +25,7 @@ from ..messages import draw_labels
 import re
 from ..fbloader import FBLoader
 from ..utils.manipulate import what_is_state
-from ..utils.materials import find_tex_by_name
+from ..utils.materials import find_bpy_image_by_name
 import keentools_facebuilder.blender_independent_packages.pykeentools_loader as pkt
 
 
@@ -521,7 +521,7 @@ class FB_PT_Model(Panel):
 
         head = settings.get_head(headnum)
 
-        op = layout.operator(Config.fb_unmorph_idname, text="Reset")
+        op = layout.operator(Config.fb_unmorph_idname, text='Reset')
         op.headnum = headnum
         op.camnum = settings.current_camnum
 
@@ -535,20 +535,18 @@ class FB_PT_Model(Panel):
         row = box.row()
         row.prop(head, 'model_scale')
 
+        box.prop(head, 'model_type')
+
+        if FBLoader.is_not_loaded():
+            return
+        fb = FBLoader.get_builder()
         box = layout.box()
         box.label(text='Model parts:')
-        row = box.row()
-        row.prop(head, 'check_ears')
-        row.prop(head, 'check_eyes')
-        row = box.row()
-        row.prop(head, 'check_face')
-        row.prop(head, 'check_headback')
-        row = box.row()
-        row.prop(head, 'check_jaw')
-        row.prop(head, 'check_mouth')
-        row = box.row()
-        row.prop(head, 'check_neck')
-        row.prop(head, 'check_nose')
+        names = fb.mask_names()
+        for i, mask in enumerate(fb.masks()):
+            if i % 2 == 0:
+                row = box.row()
+            row.prop(head, 'masks', index=i, text=names[i])
 
 
 class FB_PT_TexturePanel(Panel):
@@ -605,7 +603,7 @@ class FB_PT_TexturePanel(Panel):
                           text="Create texture", icon='IMAGE')
         op.headnum = headnum
 
-        texture_exists = find_tex_by_name(Config.tex_builder_filename)
+        texture_exists = find_bpy_image_by_name(Config.tex_builder_filename)
         row = layout.row()
         if not texture_exists:
             row.active = False
@@ -661,10 +659,12 @@ class FB_PT_WireframeSettingsPanel(Panel):
         settings = get_main_settings()
 
         box = layout.box()
-        row = box.row()
+        split = box.split(factor=0.625)
+        row = split.row()
         row.prop(settings, 'wireframe_color', text='')
         row.prop(settings, 'wireframe_special_color', text='')
-        row.prop(settings, 'wireframe_opacity', text='', slider=True)
+        row.prop(settings, 'wireframe_midline_color', text='')
+        split.prop(settings, 'wireframe_opacity', text='', slider=True)
 
         row = box.row()
         op = row.operator(Config.fb_wireframe_color_idname, text="R")
