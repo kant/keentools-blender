@@ -487,6 +487,12 @@ class FBHeadItem(PropertyGroup):
                                       items=model_type_callback,
                                       description='Invisible Model selector')
 
+    def head_based_workflow(self):
+        return False
+
+    def camera_based_workflow(self):
+        return not self.head_based_workflow()
+
     def blenshapes_are_relevant(self):
         if self.has_no_blendshapes():
             return True

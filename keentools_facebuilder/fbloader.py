@@ -390,7 +390,7 @@ class FBLoader:
         logger.debug("LOAD MODEL END")
 
     @classmethod
-    def place_camera(cls, headnum, camnum):
+    def place_camera_relative_to_head(cls, headnum, camnum):
         settings = get_main_settings()
         head = settings.get_head(headnum)
         camera = head.get_camera(camnum)
@@ -405,6 +405,31 @@ class FBLoader:
             headobj.matrix_world)
         if mat is not None:
             camobj.matrix_world = mat
+
+    @classmethod
+    def place_head_relative_to_camera(cls, headnum, camnum):
+        settings = get_main_settings()
+        head = settings.get_head(headnum)
+        camera = head.get_camera(camnum)
+        camobj = camera.camobj
+        headobj = head.headobj
+
+        fb = cls.get_builder()
+        keyframe = camera.get_keyframe()
+
+        rot_mat = coords.xy_to_xz_rotation_matrix_4x4()
+        nm = np.array(camobj.matrix_world) @ (fb.model_mat(keyframe) @ rot_mat)
+
+        headobj.matrix_world = nm.transpose()
+
+    @classmethod
+    def place_camera(cls, headnum, camnum):
+        settings = get_main_settings()
+        head = settings.get_head(headnum)
+        if head.head_based_workflow():
+            cls.place_camera_relative_to_head(headnum, camnum)
+        else:
+            cls.place_head_relative_to_camera(headnum, camnum)
 
     @classmethod
     def load_pins(cls, headnum, camnum):
