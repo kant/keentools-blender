@@ -203,7 +203,8 @@ class FBLoader:
 
         for camnum, camera in enumerate(head.cameras):
             if camera.has_pins():
-                cls.place_camera(headnum, camnum)
+                if head.head_based_workflow():
+                    cls.place_camera(headnum, camnum)
                 keyframe = camera.get_keyframe()
                 camera.set_model_mat(fb.model_mat(keyframe))
 
