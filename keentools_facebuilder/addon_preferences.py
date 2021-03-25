@@ -211,18 +211,21 @@ class FBAddonPreferences(bpy.types.AddonPreferences):
         description="Set pin size in pixels",
         name="Size",
         default=DefaultUserPreferences.pin_size, min=1.0, max=100.0,
+        precision=1,
         update=_update_user_preferences_pin_size)
 
     pin_sensitivity: bpy.props.FloatProperty(
         description="Set active area in pixels",
         name="Active area",
         default=DefaultUserPreferences.pin_sensitivity,
+        precision=1,
         min=1.0, max=100.0, update=_update_user_preferences_pin_sensitivity)
 
     focal: bpy.props.FloatProperty(
         description="35mm equivalent focal length (mm)",
         name="Focal Length (mm)",
         default=DefaultUserPreferences.focal,
+        precision=1,
         min=0.1)
 
     prevent_view_rotation: bpy.props.BoolProperty(

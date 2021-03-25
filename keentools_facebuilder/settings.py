@@ -688,11 +688,13 @@ class FBSceneSettings(PropertyGroup):
         description="Set pin size in pixels",
         name="Size",
         default=Config.default_pin_size, min=1.0, max=100.0,
+        precision=1,
         update=update_pin_size)
     pin_sensitivity: FloatProperty(
         description="Set active area in pixels",
         name="Active area",
         default=Config.default_point_sensitivity, min=1.0, max=100.0,
+        precision=1,
         update=update_pin_sensitivity)
 
     # Other settings
