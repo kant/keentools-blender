@@ -117,7 +117,7 @@ class FBCameraItem(PropertyGroup):
 
     focal: FloatProperty(
         description="35mm equivalent focal length (mm)",
-        name="Focal Length (mm)", default=50,
+        name="Focal Length (mm)", default=Config.default_focal_length,
         min=0.1, update=update_camera_focal)
 
     background_scale: FloatProperty(
@@ -904,3 +904,6 @@ class FBSceneSettings(PropertyGroup):
 
     def is_proper_headnum(self, headnum):
         return 0 <= headnum <= self.get_last_headnum()
+
+    def preferences(self):
+        return bpy.context.preferences.addons[Config.addon_name].preferences

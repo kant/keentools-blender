@@ -147,11 +147,12 @@ if not _can_load():
         logger.error("CANNOT LOAD PREFERENCES UNREGISTERED")
 
 else:
+    from .addon_preferences import FB_OT_UserPreferencesChanger, FBAddonPreferences, load_handler
     from .preferences import CLASSES_TO_REGISTER as PREFERENCES_CLASSES
     from .interface import CLASSES_TO_REGISTER as INTERFACE_CLASSES
     from .main_operator import CLASSES_TO_REGISTER as OPERATOR_CLASSES
     from .head import MESH_OT_FBAddHead
-    from .settings import FBExifItem, FBCameraItem, FBHeadItem, FBSceneSettings
+    from .settings import FBExifItem, FBCameraItem, FBHeadItem, FBSceneSettings, get_main_settings
     from .pinmode import FB_OT_PinMode
     from .pick_operator import FB_OT_PickMode, FB_OT_PickModeStarter
     from .movepin import FB_OT_MovePin
@@ -159,7 +160,10 @@ else:
 
     from .utils.icons import FBIcons
 
-    CLASSES_TO_REGISTER = (MESH_OT_FBAddHead,
+
+    CLASSES_TO_REGISTER = (FBAddonPreferences,
+                           FB_OT_UserPreferencesChanger,
+                           MESH_OT_FBAddHead,
                            FBExifItem,
                            FBCameraItem,
                            FBHeadItem,
@@ -206,6 +210,7 @@ else:
         FBIcons.register()
         logger.debug("ICONS REGISTERED")
 
+        FBAddonPreferences.mark_addon_loaded(status=True)
 
     def unregister():
         logger = logging.getLogger(__name__)
@@ -220,6 +225,8 @@ else:
 
         FBIcons.unregister()
         logger.debug("ICONS UNREGISTERED")
+
+        FBAddonPreferences.mark_addon_loaded(status=False)
 
 
 if __name__ == "__main__":
